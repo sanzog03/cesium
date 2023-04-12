@@ -6,6 +6,7 @@ import DeveloperError from "../Core/DeveloperError.js";
 import Matrix4 from "../Core/Matrix4.js";
 import Resource from "../Core/Resource.js";
 import Cesium3DTileset from "../Scene/Cesium3DTileset.js";
+import Cesium3DTileStyle from "../Scene/Cesium3DTileStyle.js"; // added for styling
 import BoundingSphereState from "./BoundingSphereState.js";
 import Property from "./Property.js";
 
@@ -235,6 +236,21 @@ function removeTileset(visualizer, entity, tilesetHash, primitives) {
   }
 }
 
+function getColorExpression() {
+  const reverse = true;
+  const ascale = 4.346;
+  const vmin = -10;
+  const vmax = 30;
+  const vrange = vmax - vmin;
+  const hmin = 0.438;
+  const hrange = 1;
+  let revScale = "";
+  if (reverse) {
+    revScale = " * -1.0 + 1.0";
+  }
+  return `hsla((((clamp(\${value}, ${vmin}, ${vmax}) + ${vmin}) / ${vrange}) ${revScale}) * ${hrange} + ${hmin}, 1.0, 0.5, pow((\${value} - ${vmin})/${vrange}, ${ascale}))`;
+}
+
 async function createTileset(resource, tilesetHash, entity, primitives) {
   tilesetHash[entity.id] = {
     url: resource.url,
@@ -244,6 +260,19 @@ async function createTileset(resource, tilesetHash, entity, primitives) {
   try {
     const tileset = await Cesium3DTileset.fromUrl(resource);
     tileset.id = entity;
+
+    //********************************************************* */
+    //       ADD CODE HERE FOR STYLE HANDLING START             */
+    //********************************************************* */
+
+    tileset.style = new Cesium3DTileStyle({
+      color: getColorExpression(),
+    });
+
+    //********************************************************* */
+    //       ADD CODE HERE FOR STYLE HANDLING END               */
+    //********************************************************* */
+
     primitives.add(tileset);
 
     if (!defined(tilesetHash[entity.id])) {
